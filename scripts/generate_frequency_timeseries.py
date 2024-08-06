@@ -53,7 +53,7 @@ def process_pulsar(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitude):
     f = dphi / dt 
 
 
-    return f,psr.name,psr['F0'].val,psr['F1'].val
+    return f,psr.name,psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val
 
 
 
@@ -106,10 +106,10 @@ tim_array = np.zeros((len(t),Npsr+1)) # Npsr+1 as final column will be time
 tim_array[:,-1] = t
 
 # f-par outout array
-par_array = np.zeros((2,Npsr)) 
+par_array = np.zeros((4,Npsr)) # 4 parameters: F0, F1, DEC,RA, in that order
 
 for i in range(Npsr):
-    f,psr_name,F0,F1 = process_pulsar(list_of_par_files[i],
+    f,psr_name,F0,F1,DEC,RA = process_pulsar(list_of_par_files[i],
                    list_of_tim_files[i],
                    dictionary_of_parameters['seed']+i,
                    gwb,
@@ -119,7 +119,8 @@ for i in range(Npsr):
     tim_array[:,i] = f
     par_array[0,i] = F0
     par_array[1,i] = F1
-
+    par_array[2,i] = DEC
+    par_array[3,i] = RA
 
 
 #Save everything to disk
