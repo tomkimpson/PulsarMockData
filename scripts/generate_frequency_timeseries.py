@@ -8,53 +8,55 @@ import pandas as pd
 import numpy as np
 
 
-
 # This script takes in data from the IPTA MDC and generates frequency timeseries
 # It outputs two files into the 'output_data/' directory
 #   * frequency_timeseries :: a numpy savez object which contains an 'f-tim-file', i.e. frequency timeseries for all pulsars and an 'f-par-file', i.e. an abridged parameter file for all pulsars
 #   * hyper_parameters :: a json file that records the hyper-parameters used to generate the data
 
 
+# def get_stoas(par_file,tim_file):
+#     #Create a pulsar object   
+#     psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
+#     stoas = psr.stoas
+#     t_seconds = (stoas-stoas[0])*86400 
 
-
-def get_stoas(par_file,tim_file):
-    #Create a pulsar object   
-    psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
-    stoas = psr.stoas
-    t_seconds = (stoas-stoas[0])*86400 # make first time =0, and convert everything to seconds
-
-    return t_seconds[:-1] # drop the final time since f is defined via t2-t1 and so len(f) = len(t) - 1
+#     return t_seconds[:-1] # drop the final time since f is defined via t2-t1 and so len(f) = len(t) - 1
 
 
 def process_pulsar(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitude):
 
     #Create a pulsar object
-   
     psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
     print(f'Processing pulsar {psr.name}')
 
-    #make_ideal shifts the ToAs so that they are exactly aligned with the timing model we loaded
+    # Shift the ToAs so that they are exactly aligned with the timing model we loaded
+    # For whatever reason doing two passes of make_ideal gets a better result - with just one you can end up with a slight trend in the residuals
     toasim.make_ideal(psr) 
-    toasim.make_ideal(psr) # For whatever reason doing two passes of make_ideal gets a better result - with just one you can end up with a slight trend in the residuals
+    toasim.make_ideal(psr) 
 
 
     #add noise
     toasim.add_rednoise(psr,psr_amplitude,psr_alpha,seed=noise_seed)     # Add some red noise 
     toasim.add_efac(psr,seed=noise_seed)                                 # Add white noise at the level specified in the .tim file. For dataset 1 this is the same for all pulsars. Note that for dataset 2 this is not true - different pulsars have different TOA errs
-    gwb.add_gwb(psr,1) # Add GW background noise. Assumes all pulsars are at 1kpc
+    gwb.add_gwb(psr,1)                                                   # Add GW background noise. Assumes all pulsars are at 1kpc
     
 
     #Convert to frequency
-    pulsar_emission_times = psr.pets()          # PET for Pulsar Emission Time - these are the ToAs in the pulsar frame
-    pulse_number          = psr.pulsenumbers()  # These are the pulse numbers for each ToA --- i.e. the (inferred) absolute phase at each ToA. This is what you really want to use as your phase measurement
+    pulsar_emission_times = psr.pets()                                               # PET for Pulsar Emission Time - these are the ToAs in the pulsar frame
+    pets                  = (pulsar_emission_times - pulsar_emission_times[0])*86400 # make first time =0, and convert everything to seconds
+    pulse_number          = psr.pulsenumbers()                                       # These are the pulse numbers for each ToA --- i.e. the (inferred) absolute phase at each ToA. This is what you really want to use as your phase measurement
 
-    dt = np.diff(pulsar_emission_times)*86400 # PETs are in MJD so multiply by 86400 to get seconds
+    dt   = np.diff(pets) 
     dphi = np.diff(pulse_number)
-    f = dphi / dt 
+    f    = dphi / dt 
 
 
-    return f,psr.name,psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val
+    # Define t variable
+    t = pets[:-1] # drop the final time since f is defined via t2-t1 and so len(f) = len(t) - 1
 
+    print("STOAs")
+    print(np.diff(psr.stoas)*86400)
+    return t,f, psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val
 
 
 
@@ -94,44 +96,49 @@ gwb = toasim.GWB(ngw=dictionary_of_parameters['n_gw_sources'],
 # Of course, the parameters are also defined in the actual par files, but also useful to have one parameter file that we can load
 
 
-# I am going to assume that the time at which each f(t) is evaluated is the same for each pulsar
-# This seems like a reasonable assumption - but there may be something subtle here that I am missing. 
-# Important to check this
-t = get_stoas(list_of_par_files[0],
-              list_of_tim_files[0]
-             )
+# # I am going to assume that the time at which each f(t) is evaluated is the same for each pulsar
+# # This seems like a reasonable assumption - but there may be something subtle here that I am missing. 
+# # Important to check this
+# t = get_stoas(list_of_par_files[0],
+#               list_of_tim_files[0]
+#              )
 
-# f-tim outout array
-tim_array = np.zeros((len(t),Npsr+1)) # Npsr+1 as final column will be time 
-tim_array[:,-1] = t
+# # f-tim outout array
+# tim_array = np.zeros((len(t),Npsr+1)) # Npsr+1 as final column will be time 
+# tim_array[:,-1] = t
 
-# f-par outout array
-par_array = np.zeros((4,Npsr)) # 4 parameters: F0, F1, DEC,RA, in that order
+# # f-par outout array
+# par_array = np.zeros((4,Npsr)) # 4 parameters: F0, F1, DEC,RA, in that order
 
 for i in range(Npsr):
-    f,psr_name,F0,F1,DEC,RA = process_pulsar(list_of_par_files[i],
+    t,f,F0,F1,DEC,RA = process_pulsar(list_of_par_files[i],
                    list_of_tim_files[i],
                    dictionary_of_parameters['seed']+i,
                    gwb,
                    dictionary_of_parameters['psr_alpha'],
                    dictionary_of_parameters['psr_amplitude'])
+
+    print(np.diff(t))
+
+    if i > 2:
+        sys.exit()
     
-    tim_array[:,i] = f
-    par_array[0,i] = F0
-    par_array[1,i] = F1
-    par_array[2,i] = DEC
-    par_array[3,i] = RA
+    # tim_array[:,i] = f
+    # par_array[0,i] = F0
+    # par_array[1,i] = F1
+    # par_array[2,i] = DEC
+    # par_array[3,i] = RA
 
 
-#Save everything to disk
-output_file = '../output_data/frequency_timeseries'
-np.savez(output_file, f_tim_file=tim_array, f_par_file=par_array)
+# #Save everything to disk
+# output_file = '../output_data/frequency_timeseries'
+# np.savez(output_file, f_tim_file=tim_array, f_par_file=par_array)
 
 
-# also save the parameters file to disk 
-import json
-with open('../output_data/hyper_parameters', 'w') as f: 
-    json.dump(dictionary_of_parameters, f)
+# # also save the parameters file to disk 
+# import json
+# with open('../output_data/hyper_parameters', 'w') as f: 
+#     json.dump(dictionary_of_parameters, f)
 
 
 
