@@ -21,3 +21,11 @@ A demo of this approach is found in `notebooks/01.explore_how_to_generate_freque
 
 The script used to generate the actual data used by the Kalman filter is `scripts/generate_frequency_timeseries.py`
 
+
+#### A note on times 
+
+We are generating an $f(t)$. The method for getting the $f$ part is straightforward, but when should we consider the $t$ to occur?
+
+Two options: `psr.stoas` or `psr.pets`. The difference between the two is << the time interval `dt` so it shouldnt matter too much. 
+
+For `Dataset 1` the data is uniformly sampled. In this case we use `psr.stoas` and assume this `t` is the same for all pulsars. 

@@ -52,7 +52,7 @@ def process_pulsar_files(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitud
     
 
     #Convert to frequency
-    residuals             = psr.residuals()       # units of seconds
+    residuals             = psr.residuals()                  # units of seconds
     pulsar_emission_times = (psr.pets()-psr.pets()[0])*86400 # PET for Pulsar Emission Time - these are the ToAs in the pulsar frame. PETs are in MJD so multiply by 86400 to get seconds
 
     dt = np.diff(pulsar_emission_times)
@@ -62,13 +62,23 @@ def process_pulsar_files(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitud
     f_Hz = f*psr['F0'].val # F0 factor for units 
 
     #Consider the frequencies to be evaluated at the lower end of the box - arbitrary
-    t_eval = pulsar_emission_times[0:-1]
-    
+    t_eval = get_stoas(par_file,tim_file) # Alternatively, t_eval = pulsar_emission_times[0:-1]. I don't think the difference matters, but we should double check
 
 
     return t_eval,f_Hz, psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val
 
 
 
+def get_stoas(par_file,tim_file):
+    """At what time should we consider the frequencies to be evaluated?"""
+    #Create a pulsar object   
+    psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
+    stoas = psr.stoas
+    t_seconds = (stoas-stoas[0])*86400 
+    return t_seconds[:-1] # drop the final time since f is defined via t2-t1 and so len(f) = len(t) - 1
 
 
+# def get_nobs(par_file,tim_file):
+#     """How many TOAs are in this tim file?"""
+#     psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
+#     return psr.nobs 
