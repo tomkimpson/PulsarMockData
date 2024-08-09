@@ -77,8 +77,3 @@ def get_stoas(par_file,tim_file):
     t_seconds = (stoas-stoas[0])*86400 
     return t_seconds[:-1] # drop the final time since f is defined via t2-t1 and so len(f) = len(t) - 1
 
-
-# def get_nobs(par_file,tim_file):
-#     """How many TOAs are in this tim file?"""
-#     psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
-#     return psr.nobs 

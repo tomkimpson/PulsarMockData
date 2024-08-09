@@ -11,6 +11,8 @@ from generate_frequency_timeseries import process_pulsar_files, get_stoas
 import libstempo 
 import os 
 import json
+import shutil
+
 
 # User arguments
 seed          = int(sys.argv[1])
@@ -18,6 +20,7 @@ gw_amplitude  = float(sys.argv[2])
 psr_amplitude = float(sys.argv[3])
 efac          = float(sys.argv[4])
 ID            = sys.argv[5]        # used for IO
+overwrite     = eval(sys.argv[6])
 
 # Define the data to use
 path_to_data = '../mdc/IPTA_Challenge1_open/Challenge_Data/Dataset1/'
@@ -28,6 +31,9 @@ Npsr = len(list_of_par_files)
 
 # Define where output data will go
 output_dir = f'../output_data/{ID}'
+
+if os.path.exists(output_dir) & overwrite:
+    shutil.rmtree(output_dir)
 os.mkdir(output_dir)
 
 
@@ -72,7 +78,7 @@ for i in range(Npsr):
                                             psr_amplitude =dictionary_of_parameters['psr_amplitude'],
                                             efac          = dictionary_of_parameters['efac'])
 
-
+     
     tim_array[:,i] = f
     par_array[0,i] = F0
     par_array[1,i] = F1
