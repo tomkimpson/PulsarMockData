@@ -29,3 +29,10 @@ We are generating an $f(t)$. The method for getting the $f$ part is straightforw
 Two options: `psr.stoas` or `psr.pets`. The difference between the two is << the time interval `dt` so it shouldnt matter too much. 
 
 For `Dataset 1` the data is uniformly sampled. In this case we use `psr.stoas` and assume this `t` is the same for all pulsars. 
+
+
+#### A note on data
+
+One of the par files has been modified compared to [https://github.com/nanograv/mdc1](https://github.com/nanograv/mdc1)
+
+We have added an F1 measurement to PSR J1741+1351 in open dataset 1 which was previously missing. This value was obtained from https://fermi.gsfc.nasa.gov/ssc/data/access/lat/3rd_PSR_catalog/3PC_HTML/J1741+1351.html
