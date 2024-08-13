@@ -48,11 +48,14 @@ def process_pulsar_files(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitud
     #add noise
     toasim.add_rednoise(psr,psr_amplitude,psr_alpha,seed=noise_seed)     # Add some red noise 
     toasim.add_efac(psr,seed=noise_seed,efac=efac)                       # Add white noise at the level specified in the .tim file. For dataset 1 this is the same for all pulsars. Note that for dataset 2 this is not true - different pulsars have different TOA errs
+    
+    
     gwb.add_gwb(psr,1)                                                   # Add GW background noise. Assumes all pulsars are at 1kpc
     
 
     #Convert to frequency
     residuals             = psr.residuals()                  # units of seconds
+  
     pulsar_emission_times = (psr.pets()-psr.pets()[0])*86400 # PET for Pulsar Emission Time - these are the ToAs in the pulsar frame. PETs are in MJD so multiply by 86400 to get seconds
 
     dt = np.diff(pulsar_emission_times)

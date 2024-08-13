@@ -41,11 +41,11 @@ os.mkdir(output_dir)
 # This defines the noise on our synthetic data.
 # The dict will be saved to disk that will be saved to disk
 dictionary_of_parameters = {'seed': 1,                      # Define a root seed to be used by all random processes
-                            'n_gw_sources':int(1e3),        # Number of sources that make up the GWB
+                            'n_gw_sources':int(1e4),        # Number of sources that make up the GWB
                             'gw_amplitude':gw_amplitude,    # Amplitude of GWB
                             'gw_alpha': -2/3,               # Spectral index of GWB
                             'psr_amplitude': psr_amplitude, # Amplitude of pulsar process noise
-                            'psr_alpha': 4,                 # Spectral index of GWB
+                            'psr_alpha': 1.7,                 # Spectral index of PSR power law
                             'efac': efac                    # Scaling factor of measurement noise
                             }                 
 
