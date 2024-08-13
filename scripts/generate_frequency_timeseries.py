@@ -37,6 +37,7 @@ def process_pulsar_files(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitud
 
     #Create a pulsar object
     psr = libstempo.tempopulsar(parfile=par_file,timfile=tim_file)   
+    psr['TRACK'].val = -2
     print(f'Processing pulsar {psr.name}')
 
     # Shift the ToAs so that they are exactly aligned with the timing model we loaded
@@ -68,7 +69,7 @@ def process_pulsar_files(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitud
     t_eval = get_stoas(par_file,tim_file) # Alternatively, t_eval = pulsar_emission_times[0:-1]. I don't think the difference matters, but we should double check
 
 
-    return t_eval,f_Hz, psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val
+    return t_eval,f_Hz, psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val, residuals,pulsar_emission_times
 
 
 

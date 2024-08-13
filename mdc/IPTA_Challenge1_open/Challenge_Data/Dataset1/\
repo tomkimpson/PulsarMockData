@@ -1,0 +1,5 @@
+for par in *par;
+do
+    echo $par
+    echo 'hey'
+done

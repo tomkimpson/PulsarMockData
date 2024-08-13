@@ -36,3 +36,12 @@ For `Dataset 1` the data is uniformly sampled. In this case we use `psr.stoas` a
 One of the par files has been modified compared to [https://github.com/nanograv/mdc1](https://github.com/nanograv/mdc1)
 
 We have added an F1 measurement to PSR J1741+1351 in open dataset 1 which was previously missing. This value was obtained from https://fermi.gsfc.nasa.gov/ssc/data/access/lat/3rd_PSR_catalog/3PC_HTML/J1741+1351.html
+
+
+#### A note on data processing
+
+There isn't yet an easy way to deal with phase-wrapping in `libstempo`. In some cases this can lead to numerical artifacts in the frequency timeseries.
+
+To deal with this we use the script `add_pn.py` which takes a par and tim file and produces a new file with absolute phase numbering included. 
+
+For now, we have just edited open dataset 1.

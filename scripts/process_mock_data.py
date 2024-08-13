@@ -25,7 +25,7 @@ overwrite     = eval(sys.argv[6])
 # Define the data to use
 path_to_data = '../mdc/IPTA_Challenge1_open/Challenge_Data/Dataset1/'
 list_of_par_files = sorted(glob.glob(path_to_data+'/*.par'))
-list_of_tim_files = sorted(glob.glob(path_to_data+'/*.tim'))
+list_of_tim_files = sorted(glob.glob(path_to_data+'/*_pn.tim'))
 assert len(list_of_par_files) == len(list_of_tim_files)
 Npsr = len(list_of_par_files)
 
@@ -41,7 +41,7 @@ os.mkdir(output_dir)
 # This defines the noise on our synthetic data.
 # The dict will be saved to disk that will be saved to disk
 dictionary_of_parameters = {'seed': 1,                      # Define a root seed to be used by all random processes
-                            'n_gw_sources':int(1e4),        # Number of sources that make up the GWB
+                            'n_gw_sources':int(1e3),        # Number of sources that make up the GWB
                             'gw_amplitude':gw_amplitude,    # Amplitude of GWB
                             'gw_alpha': -2/3,               # Spectral index of GWB
                             'psr_amplitude': psr_amplitude, # Amplitude of pulsar process noise
@@ -70,7 +70,7 @@ par_array = np.zeros((4,Npsr))          # 4 parameters: F0, F1, DEC,RA, in that 
 
 
 for i in range(Npsr):
-    _,f,F0,F1,DEC,RA = process_pulsar_files(par_file      =list_of_par_files[i],
+    _,f,F0,F1,DEC,RA,_,_ = process_pulsar_files(par_file   =list_of_par_files[i],
                                             tim_file      =list_of_tim_files[i],
                                             noise_seed    =dictionary_of_parameters['seed']+i, # different seed for each pulsar
                                             gwb           =gwb,
