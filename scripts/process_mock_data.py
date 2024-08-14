@@ -1,6 +1,9 @@
 # This script takes in data from the IPTA MDC and generates frequency timeseries
 # It outputs two files into the 'output_data/' directory
-#   * frequency_timeseries :: a numpy savez object which contains an 'f-tim-file', i.e. frequency timeseries for all pulsars, and an 'f-par-file', i.e. an abridged parameter file for all pulsars
+#   * frequency_timeseries :: a numpy savez object which contains:
+#    ** an 'f-tim-file', i.e. frequency timeseries for all pulsars, 
+#    ** an 'f-par-file', i.e. an abridged parameter file for all pulsars
+#    ** an 'f-tim-file-clean', i.e. a frequency timeseries without white measurement noise
 #   * hyper_parameters     :: a json file that records the hyper-parameters used to generate the data
 
 import sys
@@ -65,12 +68,13 @@ gwb = toasim.GWB(ngw=dictionary_of_parameters['n_gw_sources'],
   ### Of course, the parameters are also defined in the actual par files, but also useful to have one parameter file that we can load
 
 t = get_stoas(list_of_par_files[0],list_of_tim_files[0])
-tim_array = np.zeros((len(t),Npsr+1))   #  Npsr+1 as final column will be time 
-par_array = np.zeros((4,Npsr))          # 4 parameters: F0, F1, DEC,RA, in that order
+tim_array = np.zeros((len(t),Npsr+1))      #  Npsr+1 as final column will be time 
+par_array = np.zeros((5,Npsr))             # 4 parameters: F0, F1, DEC,RA, in that order
+clean_tim_array = np.zeros_like(tim_array) # For frequencies without measurement noise 
 
 
 for i in range(Npsr):
-    _,f,F0,F1,DEC,RA,_,_ = process_pulsar_files(par_file   =list_of_par_files[i],
+    _,f_clean,f,F0,F1,DEC,RA,σm = process_pulsar_files(par_file   =list_of_par_files[i],
                                             tim_file      =list_of_tim_files[i],
                                             noise_seed    =dictionary_of_parameters['seed']+i, # different seed for each pulsar
                                             gwb           =gwb,
@@ -79,19 +83,23 @@ for i in range(Npsr):
                                             efac          = dictionary_of_parameters['efac'])
 
      
+
     tim_array[:,i] = f
     par_array[0,i] = F0
     par_array[1,i] = F1
     par_array[2,i] = DEC
     par_array[3,i] = RA
+    par_array[4,i] = σm
+
+    clean_tim_array[:,i] = f_clean
 
 tim_array[:,-1] = t # last column is time
-
+clean_tim_array[:,-1] = t # last column is time
 
 
 #Save everything to disk
 output_file = f'{output_dir}/frequency_timeseries'
-np.savez(output_file, f_tim_file=tim_array, f_par_file=par_array)
+np.savez(output_file, f_tim_file=tim_array, f_par_file=par_array,f_tim_file_clean=clean_tim_array)
 
 
 # also save the parameters file to disk 

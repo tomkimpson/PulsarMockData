@@ -46,30 +46,48 @@ def process_pulsar_files(par_file,tim_file,noise_seed,gwb,psr_alpha,psr_amplitud
     toasim.make_ideal(psr) 
 
 
-    #add noise
+    #Add noise
     toasim.add_rednoise(psr,psr_amplitude,psr_alpha,seed=noise_seed)     # Add some red noise 
-    toasim.add_efac(psr,seed=noise_seed,efac=efac)                       # Add white noise at the level specified in the .tim file. For dataset 1 this is the same for all pulsars. Note that for dataset 2 this is not true - different pulsars have different TOA errs
-    
-    
     gwb.add_gwb(psr,1)                                                   # Add GW background noise. Assumes all pulsars are at 1kpc
+    f_Hz_no_measurement_noise = convert_to_frequencies(psr)              # Generate a frequency timeseries for this object before we add white measurement noise
+    toasim.add_efac(psr,seed=noise_seed,efac=efac)                       # Add white noise at the level specified in the .tim file. For dataset 1 this is the same for all pulsars. Note that for dataset 2 this is not true - different pulsars have different TOA errs
+    f_Hz = convert_to_frequencies(psr)                                    # Generate a frequency timeseries including measurement noise
+
     
 
-    #Convert to frequency
-    residuals             = psr.residuals()                  # units of seconds
-  
-    pulsar_emission_times = (psr.pets()-psr.pets()[0])*86400 # PET for Pulsar Emission Time - these are the ToAs in the pulsar frame. PETs are in MJD so multiply by 86400 to get seconds
+    #Get times at which the frequencies were evaluated
+    #We consider the frequencies to be evaluated at the lower end of the box - arbitrary
+    t_eval = get_stoas(par_file,tim_file) # Alternatively, t_eval = pulsar_emission_times[0:-1]. I don't think the difference matters, but we should double check
 
+    #Assuming all pulsars have a timing measurement noise of 0.1 mu s (true for dataset 1), estimate the uncertainty on the frequency measurement
+    σm = 0.1*1e-6 *  psr['F0'].val / (t_eval[1] - t_eval[0])
+
+
+    return t_eval,f_Hz_no_measurement_noise,f_Hz,psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val, σm
+
+
+
+
+def convert_to_frequencies(psr_object):
+    """
+    Given a libstempo psr object, return a frequency timeseries 
+    """
+ 
+    #Get residuals and PETs
+    residuals             = psr_object.residuals()                         # units of seconds
+    pulsar_emission_times = (psr_object.pets()-psr_object.pets()[0])*86400 # PET for Pulsar Emission Time - these are the ToAs in the pulsar frame. PETs are in MJD so multiply by 86400 to get seconds
+
+    #Get differences
     dt = np.diff(pulsar_emission_times)
     dres = np.diff(residuals)
     
+    #Get frequency
     f    = dres / dt 
-    f_Hz = f*psr['F0'].val # F0 factor for units 
+    f_Hz = f*psr_object['F0'].val # F0 factor for units 
 
-    #Consider the frequencies to be evaluated at the lower end of the box - arbitrary
-    t_eval = get_stoas(par_file,tim_file) # Alternatively, t_eval = pulsar_emission_times[0:-1]. I don't think the difference matters, but we should double check
+    return f_Hz
 
 
-    return t_eval,f_Hz, psr['F0'].val,psr['F1'].val,psr['DECJ'].val,psr['RAJ'].val, residuals,pulsar_emission_times
 
 
 
